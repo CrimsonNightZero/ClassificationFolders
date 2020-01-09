@@ -10,6 +10,7 @@ import hashlib
 import time
 import shutil
 import re
+from tqdm import tqdm
 
 class File():
     def __init__(self, path):
@@ -25,18 +26,18 @@ class File():
         return hash_md5
     
 def start_log(path, run_mode):
-    log_path = os.path.join(path, "00_Organize_folders")
+    log_path = os.path.join(path, "00_Organize_logs")
     with open(os.path.join(log_path, "delete.log"), 'a') as f:
         f.write(time.strftime(r"%Y-%m-%d_%H-%M-%S", time.localtime()) + " -> " + run_mode + "\n\n")
         
 def write_classified_log(path, original_file, file):
-    log_path = os.path.join(path, "00_Organize_folders")
+    log_path = os.path.join(path, "00_Organize_logs")
     with open(os.path.join(log_path, "delete.log"), 'a') as f:
         f.write("+" + original_file.Path + " -> -" + file.Path + "\n")
         f.write("md5 : " + original_file.Md5 + " -> " + file.Md5 + "\n\n")
         
 def write_reversed_log(path, folder_empty_list, folder_existed_file_list):
-    log_path = os.path.join(path, "00_Organize_folders")
+    log_path = os.path.join(path, "00_Organize_logs")
     with open(os.path.join(log_path, "delete.log"), 'a') as f:
         f.write(str(folder_empty_list) + " -> Number of files = 0 \n\n")
         f.write(str(folder_existed_file_list) + " ->  Number of files > 0 \n\n")
@@ -46,17 +47,22 @@ def makedirs_create(path, folder):
     if not os.path.isdir(sub_path):
         os.makedirs(r'%s/%s' % (path, folder))
         
-def get_file_list(path):
+def get_file_list(run_mode, path, data_path):
+    if run_mode == "Reverse":
+        data_path = path
     file_list = list()
     folder_list = list()
-    for file in os.listdir(path):
-        path_file = os.path.join(path, file)
-        if os.path.isdir(path_file):
-            folder_list.append(path_file)
-            continue
-        
-        file = File(path_file)
-        file_list.append(file)
+    with tqdm(total = len(os.listdir(data_path)), desc = "Search file", leave = False) as pbar:  
+        for file in os.listdir(data_path):
+            path_file = os.path.join(data_path, file)
+            if os.path.isdir(path_file):
+                folder_list.append(path_file)
+                pbar.update(1)
+                continue
+            
+            file = File(path_file)
+            file_list.append(file)
+            pbar.update(1)
         
     return file_list, folder_list
 
@@ -89,7 +95,7 @@ def get_folder_exist(folder_list, file):
 def remove_refile(file_list, path):
     del_list = list()
     for index, file in enumerate(file_list):
-        for original_file in file_list[index:]:
+        for original_file in file_list:
             # print(original_file.Path, file.Path)
             # print(original_file.Md5, file.Md5)
             # print(original_file.Date, file.Date)
@@ -109,6 +115,7 @@ def remove_refile(file_list, path):
                 
 def classified_file(file_list, folder_list, folder_index, path):
     folder_index = folder_index + 1
+    
     for index, file in enumerate(file_list):
         folder_exist = get_folder_exist(folder_list[1:], file)
         if folder_exist:
@@ -120,14 +127,14 @@ def classified_file(file_list, folder_list, folder_index, path):
             folder_index = folder_index + 1
             folder_list.append(folder_name)
             
-def reversed_file(folder_list, path):
+def reversed_file(folder_list, path, data_path):
     for folder in folder_list:
-        if not folder == "00_Organize_folders":
+        if not folder == "00_Organize_logs":
             print(folder + " ok")
             folder_path = os.path.join(path, folder)
             for file in os.listdir(folder_path):
                 file_path = os.path.join(folder_path, file)
-                shutil.move(file_path, path)
+                shutil.move(file_path, data_path)
         else:
             continue
         
@@ -144,18 +151,19 @@ def sorted_reverse_log(folder_list, path):
     write_reversed_log(path, folder_empty_list, folder_existed_file_list)
     
 if __name__ == "__main__":
-    path = r'D:\download\test'
+    data_path = r'D:\download'
     print("Data mode : 1.Classification, 2.Reverse")
     run_mode = input('請輸入您要使用的模式:\n') or "Classification"
+    path = os.path.join(data_path, "00_Organize_folders")#data_path
     makedirs_create(path, "00_delete")
-    makedirs_create(path, "00_Organize_folders")
+    makedirs_create(path, "00_Organize_logs")
     start_log(path, run_mode)
-    file_list, folder_list = get_file_list(path)
+    file_list, folder_list = get_file_list(run_mode, path, data_path)
     index, folder_list = sorting_folder(folder_list)
     
     if run_mode == "Classification":
         file_list = remove_refile(file_list, path)
         classified_file(file_list, folder_list, index, path)
     elif  run_mode == "Reverse":
-        reversed_file(folder_list, path)
+        reversed_file(folder_list, path, data_path)
         sorted_reverse_log(folder_list, path)
