@@ -102,7 +102,7 @@ def remove_refile(file_list, path):
             if original_file.Path == file.Path:
                 continue
             elif original_file.Md5 == file.Md5:
-                if original_file.Date >= file.Date:
+                if original_file.Date <= file.Date:
                     shutil.move(file.Path, os.path.join(path, "00_delete"))
                     write_classified_log(path, original_file, file)
                     del_list.append(file_list.index(file))
@@ -151,7 +151,7 @@ def sorted_reverse_log(folder_list, path):
     write_reversed_log(path, folder_empty_list, folder_existed_file_list)
     
 if __name__ == "__main__":
-    data_path = r'D:\download'
+    data_path = r'D:\Download'
     print("Data mode : 1.Classification, 2.Reverse")
     run_mode = input('請輸入您要使用的模式:\n') or "Classification"
     path = os.path.join(data_path, "00_Organize_folders")#data_path
