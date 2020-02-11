@@ -60,8 +60,8 @@ def get_file_list(run_mode, path, data_path):
                 pbar.update(1)
                 continue
             
-            file = File(path_file)
-            file_list.append(file)
+            file_module = File(path_file)
+            file_list.append(file_module)
             pbar.update(1)
         
     return file_list, folder_list
@@ -151,7 +151,7 @@ def sorted_reverse_log(folder_list, path):
     write_reversed_log(path, folder_empty_list, folder_existed_file_list)
     
 if __name__ == "__main__":
-    data_path = r'D:\Download'
+    data_path = r'D:\download'
     print("Data mode : 1.Classification, 2.Reverse")
     run_mode = input('請輸入您要使用的模式:\n') or "Classification"
     path = os.path.join(data_path, "00_Organize_folders")#data_path
