@@ -17,7 +17,7 @@ class RecordLog():
         with open(os.path.join(self.log_path, "delete.log"), 'a') as f:
             f.write(time.strftime(r"%Y-%m-%d_%H-%M-%S", time.localtime()) + " -> " + self.run_mode + "\n\n")
             
-    def write_classified_log(self, original_file, file):
+    def write_repeated_log(self, original_file, file):
         with open(os.path.join(self.log_path, "delete.log"), 'a') as f:
             f.write("+" + original_file.Path + " -> -" + file.Path + "\n")
             f.write("md5 : " + original_file.Md5 + " -> " + file.Md5 + "\n\n")

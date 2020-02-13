@@ -16,7 +16,6 @@ class OrganizeFolders():
         self.path = os.path.join(data_path, "00_Organize_folders")
         self.index = 0
         self.fileoperator = FileOperator.FileOperator(run_mode, data_path, self.path)
-        # self.fileinformation = FileInformation.FileInformation.FileInformation()
         self.recordlog = RecordLog.RecordLog(run_mode, self.path)
         self.start()
     
@@ -30,7 +29,12 @@ class OrganizeFolders():
         self.fileoperator.folder_list = folder_list
         
         self.index = self.fileoperator.sorting_folder()
-    
+        
+    def compared_mode(self, comparison_path):
+        file_list, folder_list = fileinformation.get_file_list(self.run_mode, self.path, comparison_path)
+        self.fileoperator.comparison_list = file_list
+        self.fileoperator.remove_refile()
+        
     def classified_mode(self):
         self.fileoperator.remove_refile()
         self.fileoperator.classified_file(self.index)
@@ -40,16 +44,25 @@ class OrganizeFolders():
         folder_empty_list, folder_existed_file_list = self.fileoperator.sorted_reverse()
         self.recordlog.write_reversed_log(folder_empty_list, folder_existed_file_list)
 
-def main(run_mode, data_path):
+def main(run_mode, data_path, comparison_path):
     organizefolders = OrganizeFolders(run_mode, data_path)
-
     if run_mode == "Classification":
         organizefolders.classified_mode()
     elif  run_mode == "Reverse":
         organizefolders.reversed_mode()
+    elif run_mode == "Comparison":
+        organizefolders.compared_mode(comparison_path)
     
 if __name__ == "__main__":
     data_path = r'D:\download'
-    print("Data mode : 1.Classification, 2.Reverse")
+    comparison_path = r'D:\test'
+    print("Data mode : 1.Classification, 2.Reverse 3.Comparison")
     run_mode = input('請輸入您要使用的模式:\n') or "Classification"
-    main(run_mode, data_path)
+    if run_mode == "1":
+        run_mode = "Classification"
+    elif run_mode == "2":
+        run_mode = "Reverse"
+    elif run_mode == "3":
+        run_mode = "Comparison"
+    
+    main(run_mode, data_path, comparison_path)

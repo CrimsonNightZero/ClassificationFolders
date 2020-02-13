@@ -6,7 +6,6 @@ Created on Wed Feb 12 16:32:29 2020
 """
 import os 
 import hashlib
-import re
 from tqdm import tqdm
 
 class File():
@@ -29,20 +28,28 @@ class FileInformation():
         file_list = list()
         folder_list = list()
         with tqdm(total = len(os.listdir(data_path)), desc = "Search file", leave = False) as pbar:  
-            for file in os.listdir(data_path):
-                path_file = os.path.join(data_path, file)
-                if os.path.isdir(path_file):
+            for dirPath, dirs, files in os.walk(data_path):
+                for d in dirs:
+                    path_file = os.path.join(dirPath, d)
                     folder_list.append(path_file)
-                    pbar.update(1)
-                    continue
-                
-                file_module = File(path_file)
-                file_list.append(file_module)
+                    
+                for f in files:
+                    path_file = os.path.join(dirPath, f)
+                    file_module = File(path_file)
+                    file_list.append(file_module)
+                    
                 pbar.update(1)
-            
+                
+                if (run_mode == "Classification") or (run_mode == "Reverse"):
+                    break
         return file_list, folder_list
     
-    def get_folder_exist(folder_list, file):
+    def get_folder_exist(path, folder_list, file):
+        for folder in os.listdir(path):
+            path_file = os.path.join(path, folder)
+            if os.path.isdir(path_file):
+                folder_list.append(path_file)
+                    
         for folder in folder_list:
             if file.Filename_extension in folder:
                 return folder

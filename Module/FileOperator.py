@@ -5,10 +5,8 @@ Created on Wed Feb 12 15:46:24 2020
 @author: foryou
 """
 import os 
-import hashlib
 import re
 import shutil
-from tqdm import tqdm
 from Module.FileInformation import FileInformation as fileinformation
 from Module import RecordLog
 
@@ -18,6 +16,8 @@ class FileOperator():
         self.path = path
         self.folder_list = list()
         self.file_list = list()
+        self.comparison_list = list()
+        self.run_mode = run_mode
         self.recordlog = RecordLog.RecordLog(run_mode, path)
         
     def makedirs_create(self, folder):
@@ -58,9 +58,42 @@ class FileOperator():
             str_index = str(index)
         return str_index
     
+    def is_integer(self, n):
+        try:
+            int(n)
+        except ValueError:
+            return False
+        return n
+    
+    def exist_file_rename(self, file, target_path):
+        new_file = os.path.join(target_path, os.path.basename(file.Path))
+        
+        exist = False
+        while(os.path.isfile(new_file)):
+            index = re.search("\(.*\)", os.path.basename(new_file))
+            if index and self.is_integer( index.group(0).strip("(").strip(")") ):
+                index = int( index.group(0).strip("(").strip(")") ) + 1
+                new_file = re.sub("\(.*\)", "(" + str( index ) + ")", new_file)
+                exist = True 
+            else:
+                new_file = new_file.split(".")[0] + " (1)." + new_file.split(".")[1]
+                exist = True
+            
+        return exist, new_file
+    
+    def move_file(self, file, file_path):
+        exist, new_file = self.exist_file_rename(file, file_path)
+        if exist:
+            os.rename(file.Path, new_file)   
+        else:
+            shutil.move(file.Path, file_path)
+    
     def remove_refile(self):
-        del_list = list()
-        for index, file in enumerate(self.file_list):
+        if not self.run_mode == "Comparison":  
+            self.comparison_list = self.file_list
+            del_list = list()
+            
+        for index, file in enumerate(self.comparison_list):
             for original_file in self.file_list:
                 # print(original_file.Path, file.Path)
                 # print(original_file.Md5, file.Md5)
@@ -69,25 +102,39 @@ class FileOperator():
                     continue
                 elif original_file.Md5 == file.Md5:
                     if original_file.Date <= file.Date:
-                        shutil.move(file.Path, os.path.join(self.path, "00_delete"))
-                        self.recordlog.write_classified_log(original_file, file)
-                        del_list.append(self.file_list.index(file))
+                        self.recordlog.write_repeated_log(original_file, file)
+                        
+                        delete_path = os.path.join(self.path, "00_delete")
+                        self.move_file(file, delete_path)
+                        
+                        if not self.run_mode == "Comparison":  
+                            del_list.append(self.file_list.index(file))
                         break
                     
-        for add, index in enumerate(del_list):
-            del self.file_list[index-add]
+                    elif self.run_mode == "Comparison":
+                        self.recordlog.write_repeated_log(file, original_file)
+                        
+                        delete_path = os.path.join(self.path, "00_delete")
+                        self.move_file(original_file, delete_path)
+                        break
                     
+        if not self.run_mode == "Comparison":  
+            for add, index in enumerate(del_list):
+                del self.file_list[index-add] 
+                   
     def classified_file(self, folder_index):
         folder_index = folder_index + 1
-        
         for index, file in enumerate(self.file_list):
-            folder_exist = fileinformation.get_folder_exist(self.folder_list[1:], file)
+            folder_exist = fileinformation.get_folder_exist(self.path, self.folder_list[1:], file)
             if folder_exist:
-                shutil.move(file.Path, os.path.join(self.path, folder_exist))
+                self.move_file(file, os.path.join(self.path, folder_exist))
             else:
                 folder_name = self.fix_index(folder_index) + "_" + file.Filename_extension
                 self.makedirs_create(folder_name)
-                shutil.move(file.Path, os.path.join(self.path, folder_name))
+                
+                folder_path = os.path.join(self.path, folder_name)
+                self.move_file(file, folder_path)
+                    
                 folder_index = folder_index + 1
                 self.folder_list.append(folder_name)
                 
