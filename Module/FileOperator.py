@@ -14,8 +14,9 @@ class FileOperator():
     def __init__(self, run_mode, data_path, path):
         self.data_path = data_path
         self.path = path
-        self.folder_list = list()
         self.file_list = list()
+        self.folder_list = list()
+        self.file_module_list = list()
         self.comparison_list = list()
         self.run_mode = run_mode
         self.recordlog = RecordLog.RecordLog(run_mode, path)
@@ -90,11 +91,11 @@ class FileOperator():
     
     def remove_refile(self):
         if not self.run_mode == "Comparison":  
-            self.comparison_list = self.file_list
+            self.comparison_list = self.file_module_list
             del_list = list()
             
         for index, file in enumerate(self.comparison_list):
-            for original_file in self.file_list:
+            for original_file in self.file_module_list:
                 # print(original_file.Path, file.Path)
                 # print(original_file.Md5, file.Md5)
                 # print(original_file.Date, file.Date)
@@ -108,7 +109,7 @@ class FileOperator():
                         self.move_file(file, delete_path)
                         
                         if not self.run_mode == "Comparison":  
-                            del_list.append(self.file_list.index(file))
+                            del_list.append(self.file_module_list.index(file))
                         break
                     
                     elif self.run_mode == "Comparison":
@@ -120,11 +121,11 @@ class FileOperator():
                     
         if not self.run_mode == "Comparison":  
             for add, index in enumerate(del_list):
-                del self.file_list[index-add] 
+                del self.file_module_list[index-add] 
                    
     def classified_file(self, folder_index):
         folder_index = folder_index + 1
-        for index, file in enumerate(self.file_list):
+        for index, file in enumerate(self.file_module_list):
             folder_exist = fileinformation.get_folder_exist(self.path, self.folder_list[1:], file)
             if folder_exist:
                 self.move_file(file, os.path.join(self.path, folder_exist))
@@ -148,4 +149,51 @@ class FileOperator():
                     shutil.move(file_path, self.data_path)
             else:
                 continue
+            
+    def empty_folder(self):
+        index = len(self.data_path.split('\\'))
+        if index == 1:
+            index = 0
+    
+        root_list = list()
+        for folder in self.folder_list:
+            folder_split = folder.split('\\')
+            if folder_split[index] == "00_Organize_folders":
+                continue
+            if len(folder_split) == index + 1:
+                root_list.append(folder_split[index])
         
+        exist_file = list()
+        for i,file in enumerate(self.file_list):
+            file_split = file.split('\\')[index]
+            if file_split in exist_file:
+                continue
+            elif file_split == "00_Organize_folders":
+                continue 
+            elif "." in file_split:
+                continue
+            else:
+                exist_file.append(file_split)
+           
+        empty_root_list = list()
+        removeflag = False
+        for root in root_list:   
+            removeflag = False
+            for file in exist_file:       
+                if root == file:
+                    removeflag = True
+                    break
+            if not removeflag:
+                empty_root_list.append(root)
+            
+        self.recordlog.write_emptyfolder_log(empty_root_list)
+        for root in empty_root_list: 
+            delete_path = os.path.join(self.path, "00_delete")
+            root_path = os.path.join(self.data_path, root)
+            
+            try:
+                shutil.move(root_path, delete_path)
+            except:
+                continue
+        
+            

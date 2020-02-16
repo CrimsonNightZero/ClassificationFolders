@@ -35,14 +35,22 @@ class FileInformation():
                     
                 for f in files:
                     path_file = os.path.join(dirPath, f)
-                    file_module = File(path_file)
-                    file_list.append(file_module)
+                    file_list.append(path_file)
                     
-                pbar.update(1)
-                
+                pbar.update(1)  
                 if (run_mode == "Classification") or (run_mode == "Reverse"):
                     break
         return file_list, folder_list
+    
+    def get_file_module(file_list, data_path):
+        file_module_list = list()
+        with tqdm(total = len(os.listdir(data_path)), desc = "Search file", leave = False) as pbar:  
+            for path in file_list:
+                file_module = File(path)
+                file_module_list.append(file_module)
+                pbar.update(1) 
+                
+        return file_module_list
     
     def get_folder_exist(path, folder_list, file):
         for folder in os.listdir(path):

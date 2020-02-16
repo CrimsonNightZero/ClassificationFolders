@@ -26,4 +26,7 @@ class RecordLog():
         with open(os.path.join(self.log_path, "delete.log"), 'a') as f:
             f.write(str(folder_empty_list) + " -> Number of files = 0 \n\n")
             f.write(str(folder_existed_file_list) + " ->  Number of files > 0 \n\n")
-            
+    
+    def write_emptyfolder_log(self, folder_empty_list):
+        with open(os.path.join(self.log_path, "delete.log"), 'a') as f:
+            f.write(str(folder_empty_list) + " -> Number of files = 0 \n\n")
