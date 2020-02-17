@@ -17,7 +17,7 @@ Runing mode : 1.Classification, 2.Reverse 3.Comparison 4.EmptyFolder
 
 * 3.Comparison : 比較兩個目錄內的檔案重複性，有重複則移除。
 
-* 4.EmptyFolder : 除去空資料夾。
+* 4.EmptyFolder : 除去當前目錄空資料夾。
 
 * delete.log : 操作後的紀錄檔。
 
